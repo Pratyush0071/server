@@ -18,6 +18,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use(cors({
+  origin: '*',  // Allow all origins (or specify your client origin)
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 mongoose.connect("mongodb+srv://Pratyush:Pratyush@cluster0.8udycfq.mongodb.net/myDatabaseName")
     .then(() => console.log("Database connected successfully"))
     .catch((err) => console.error("Database connection failed", err));
