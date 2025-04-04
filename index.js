@@ -10,7 +10,6 @@ const BirdsModel = require("./models/Birds");
 const FeedModel = require("./models/Feed");
 const BhoosaModel = require("./models/Bhoosa");
 const SellModel = require("./models/Sell");
-const CFeedModel = require("./models/Cfeed");
 const CfeedModel = require("./models/Cfeed");
 
 
@@ -24,8 +23,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-const express = require('express');
-const mongoose = require('mongoose');  // Only declared once
 mongoose.connect(
   'mongodb+srv://Pratyush:Pratyush@cluster0.8udycfq.mongodb.net/', 
   { useNewUrlParser: true, useUnifiedTopology: true }
