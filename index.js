@@ -23,12 +23,12 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-mongoose.connect(
-  'mongodb+srv://Pratyush:Pratyush@cluster0.8udycfq.mongodb.net/', 
-  { useNewUrlParser: true, useUnifiedTopology: true }
-)
-  .then(() => console.log('Database connected'))
-  .catch((err) => console.error('Connection error:', err));
+mongoose.connect('mongodb+srv://Pratyush:Pratyush@cluster0.8udycfq.mongodb.net/myDatabase?retryWrites=true&w=majority', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log('Database connected'))
+.catch((err) => console.error('Connection error:', err));
 
 // Server setup
 app.listen(3000, () => console.log('Server running on port 3000'));
@@ -254,25 +254,38 @@ app.get('/getCfeed', (req, res) => {
     .catch((err) => res.status(500).json({ error: err.message }));
 });
 
-app.post('/login', async (req, res) => {
-  try {
-    const { name, password } = req.body;
-    if (!name || !password) {
-      return res.status(400).json({ success: false, message: 'Missing credentials' });
-    }
+const bcrypt = require('bcrypt');
 
-    // Authentication logic here
-    if (name === 'admin' && password === '1234') {
-      res.json({ success: true, message: 'Login successful' });
-    } else {
-      res.status(401).json({ success: false, message: 'Invalid credentials' });
-    }
-  } catch (err) {
-    console.error('Login error:', err.message);
-    res.status(500).json({ success: false, message: 'Server error' });
+
+app.post('/login', async (req, res) => {
+  const { name, password } = req.body;
+
+  try {
+      const user = await UserModel.findOne({ name });
+
+      if (!user) {
+          return res.json({ success: false, message: "User not found" });
+      }
+
+      // If passwords are hashed, compare using bcrypt
+      // const isMatch = await bcrypt.compare(password, user.password);
+      const isMatch = user.password === password; // Use this if passwords are not hashed
+
+      if (!isMatch) {
+          return res.json({ success: false, message: "Invalid credentials" });
+      }
+
+      return res.json({ 
+          success: true, 
+          message: "Login successful", 
+          user: { id: user._id, name: user.name } // Include _id
+      });
+
+  } catch (error) {
+      console.error("Login error:", error);
+      return res.status(500).json({ success: false, message: "Server error" });
   }
 });
-
 
 app.put('/updateCustomer/:id', async (req, res) => {
   try {
