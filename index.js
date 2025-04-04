@@ -19,7 +19,7 @@ app.use(cors({
 app.use(express.json());
 
 // Database connection
-mongoose.connect("mongodb://localhost:27017/poultryfarm", {
+mongoose.connect("mongodb+srv://Pratyush:Pratyush@cluster0.8udycfq.mongodb.net/", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
