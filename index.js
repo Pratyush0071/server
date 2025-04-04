@@ -18,7 +18,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect("mongodb+srv://Pratyush:Pratyush@cluster0.8udycfq.mongodb.net/");
+mongoose.connect("mongodb+srv://Pratyush:Pratyush@cluster0.8udycfq.mongodb.net/myDatabaseName", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log("Database connected successfully"))
+.catch((err) => console.error("Database connection failed", err));
+
 
 // Default route
 app.get("/", (req, res) => {
