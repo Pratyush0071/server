@@ -38,7 +38,7 @@ app.get("/getCustomer", (req, res) => {
   CustomerModel.find({})
   .then((cust) => res.json(cust))
     .catch((err) => res.json(err));
-});
+}); 
 app.get("/getSuppliers", (req, res) => {
   SupplierModel.find({})
   .then((cust) => res.json(cust))
@@ -58,6 +58,14 @@ app.get("/getfeeds", (req, res) => {
   FeedModel.find({})
   .then((cust) => res.json(cust))
     .catch((err) => res.json(err));
+});
+app.get('/getempManage', async (req, res) => {
+  try {
+    const employees = await EmployeeModel.find(); // Adjust based on your DB structure
+    res.json(employees);
+  } catch (error) {
+    res.status(500).send('Error retrieving employees');
+  }
 });
 app.get("/getmotality", (req, res) => {
   MortalityModel.find({})
