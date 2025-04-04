@@ -13,7 +13,6 @@ const SellModel = require("./models/Sell");
 const CfeedModel = require("./models/Cfeed");
 
 // Use bcryptjs instead of bcrypt
-const bcrypt = require('bcryptjs');
 
 const app = express();
 app.use(cors());
