@@ -18,7 +18,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect("mongodb://localhost:27017/crud");
+mongoose.connect("mongodb+srv://Pratyush:Pratyush@cluster0.8udycfq.mongodb.net/");
 
 // Default route
 app.get("/", (req, res) => {
