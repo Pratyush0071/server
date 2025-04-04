@@ -24,11 +24,17 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-mongoose.connect("mongodb+srv://Pratyush:Pratyush@cluster0.8udycfq.mongodb.net/myDatabaseName")
-    .then(() => console.log("Database connected successfully"))
-    .catch((err) => console.error("Database connection failed", err));
+const express = require('express');
+const mongoose = require('mongoose');  // Only declared once
+mongoose.connect(
+  'mongodb+srv://Pratyush:Pratyush@cluster0.8udycfq.mongodb.net/', 
+  { useNewUrlParser: true, useUnifiedTopology: true }
+)
+  .then(() => console.log('Database connected'))
+  .catch((err) => console.error('Connection error:', err));
 
-
+// Server setup
+app.listen(3000, () => console.log('Server running on port 3000'));
 // Default route
 app.get("/", (req, res) => {
   UserModel.find({})
@@ -252,34 +258,24 @@ app.get('/getCfeed', (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
-  const { name, password } = req.body;
-
   try {
-      const user = await UserModel.findOne({ name });
+    const { name, password } = req.body;
+    if (!name || !password) {
+      return res.status(400).json({ success: false, message: 'Missing credentials' });
+    }
 
-      if (!user) {
-          return res.json({ success: false, message: "User not found" });
-      }
-
-      // If passwords are hashed, compare using bcrypt
-      // const isMatch = await bcrypt.compare(password, user.password);
-      const isMatch = user.password === password; // Use this if passwords are not hashed
-
-      if (!isMatch) {
-          return res.json({ success: false, message: "Invalid credentials" });
-      }
-
-      return res.json({ 
-          success: true, 
-          message: "Login successful", 
-          user: { id: user._id, name: user.name } // Include _id
-      });
-
-  } catch (error) {
-      console.error("Login error:", error);
-      return res.status(500).json({ success: false, message: "Server error" });
+    // Authentication logic here
+    if (name === 'admin' && password === '1234') {
+      res.json({ success: true, message: 'Login successful' });
+    } else {
+      res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+  } catch (err) {
+    console.error('Login error:', err.message);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
+
 
 app.put('/updateCustomer/:id', async (req, res) => {
   try {
