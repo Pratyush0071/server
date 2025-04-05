@@ -208,7 +208,7 @@ app.post("/forder", (req, res) => {
     .then((users) => res.json(users))
     .catch((err) => res.json(err));
 });
-app.post("/getCustomers", (req, res) => {
+app.post("/addCustomer", (req, res) => {
   CustomerModel.create(req.body)
     .then((users) => res.json(users))
     .catch((err) => res.json(err));
