@@ -10,8 +10,11 @@ const BirdsModel = require("./models/Birds");
 const FeedModel = require("./models/Feed");
 const BhoosaModel = require("./models/Bhoosa");
 const SellModel = require("./models/Sell");
-const CFeedModel = require("./models/Cfeed");
 const CfeedModel = require("./models/Cfeed");
+const EmployeeModel = require("./models/Employee");
+const FeedTypeModel = require("./models/FeedType");
+const VaccineModel = require("./models/Vaccination");
+const MedicationModel = require("./models/Medication");
 
 const app = express();
 app.use(cors());
@@ -222,6 +225,11 @@ app.post("/Cfeedtype", (req, res) => {
 });
 app.post("/empManage", (req, res) => {
   EmployeeModel.create(req.body)
+    .then((users) => res.json(users))
+    .catch((err) => res.json(err));
+});
+app.post("/addchicks", (req, res) => {
+  BirdsModel.create(req.body)
     .then((users) => res.json(users))
     .catch((err) => res.json(err));
 });
