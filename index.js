@@ -13,17 +13,17 @@ const SellModel = require("./models/Sell");
 const CFeedModel = require("./models/Cfeed");
 const CfeedModel = require("./models/Cfeed");
 
-
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect(
-  'mongodb+srv://Pratyush:Pratyush@cluster0.8udycfq.mongodb.net/', 
-  { useNewUrlParser: true, useUnifiedTopology: true }
-)
-  .then(() => console.log('Database connected'))
-  .catch((err) => console.error('Connection error:', err));
+mongoose
+  .connect("mongodb+srv://Pratyush:Pratyush@cluster0.8udycfq.mongodb.net/", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("Database connected"))
+  .catch((err) => console.error("Connection error:", err));
 
 // Default route
 app.get("/", (req, res) => {
@@ -44,7 +44,7 @@ app.get("/getCustomer", (req, res) => {
   .then((cust) => res.json(cust))
     .catch((err) => res.json(err));
 });
-app.get("/getSuppliers", (req, res) => {
+app.get("/getSupplier", (req, res) => {
   SupplierModel.find({})
   .then((cust) => res.json(cust))
     .catch((err) => res.json(err));
@@ -54,6 +54,7 @@ app.get("/getbirds", (req, res) => {
   .then((cust) => res.json(cust))
     .catch((err) => res.json(err));
 });
+
 app.get("/getbhoosa", (req, res) => {
   BhoosaModel.find({})
   .then((cust) => res.json(cust))
@@ -64,44 +65,84 @@ app.get("/getfeeds", (req, res) => {
   .then((cust) => res.json(cust))
     .catch((err) => res.json(err));
 });
+app.get("/typefeeds", (req, res) => {
+  FeedTypeModel.find({})
+  .then((cust) => res.json(cust))
+    .catch((err) => res.json(err));
+});
+app.get("/getmedicine", (req, res) => {
+  MedicationModel.find({})
+  .then((cust) => res.json(cust))
+    .catch((err) => res.json(err));
+});
+app.get('/getempManage', async (req, res) => {
+  try {
+    const employees = await EmployeeModel.find(); // Adjust based on your DB structure
+    res.json(employees);
+  } catch (error) {
+    res.status(500).send('Error retrieving employees');
+  }
+});
+
 app.get("/getmotality", (req, res) => {
   MortalityModel.find({})
   .then((cust) => res.json(cust))
     .catch((err) => res.json(err));
-});
-async function getLatestMonthTotal(model, quantityField) {
+});async function getLatestMonthTotal(model, quantityField, groupByField = null) {
   try {
     const latestEntry = await model.findOne().sort({ date: -1 }).select("date").lean();
 
     if (!latestEntry || !latestEntry.date) {
-      return { month: null, totalQuantity: 0 };
+      return { month: null, totalQuantity: 0, groupedData: {} };
     }
 
     const latestMonth = latestEntry.date.substring(0, 7); // Extract YYYY-MM
 
-    const result = await model.aggregate([
+    const aggregationPipeline = [
       {
         $match: {
-          date: { $regex: `^${latestMonth}` } // Matches all entries from the latest month
+          date: { $regex: `^${latestMonth}` }, // Matches all entries from the latest month
+          ...(groupByField && { [groupByField]: { $ne: null, $ne: "" } }) // Ensure shed field is not null or empty
         }
       },
       {
         $addFields: {
-          quantityInt: { $convert: { input: `$${quantityField}`, to: "int", onError: 0, onNull: 0 } } // Convert field to integer safely
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          totalQuantity: { $sum: "$quantityInt" } // Sum up the integer values
+          quantityInt: { 
+            $convert: { input: `$${quantityField}`, to: "int", onError: 0, onNull: 0 } 
+          } // Convert field to integer safely
         }
       }
-    ]);
+    ];
 
-    return { month: latestMonth, totalQuantity: result.length ? result[0].totalQuantity : 0 };
+    let totalQuantity = 0;
+    let groupedData = {};
+
+    if (groupByField) {
+      aggregationPipeline.push({
+        $group: {
+          _id: `$${groupByField}`,
+          totalQuantity: { $sum: "$quantityInt" } // Sum up the integer values per group
+        }
+      });
+
+      const result = await model.aggregate(aggregationPipeline);
+      result.forEach(entry => {
+        groupedData[entry._id] = entry.totalQuantity;
+        totalQuantity += entry.totalQuantity; // Sum up total quantity only for valid sheds
+      });
+    } else {
+      const result = await model.aggregate(aggregationPipeline);
+      totalQuantity = result.length ? result[0].totalQuantity : 0;
+    }
+
+    return {
+      month: latestMonth,
+      totalQuantity,
+      groupedData
+    };
   } catch (error) {
     console.error("Error fetching data:", error);
-    return { month: null, totalQuantity: 0 };
+    return { month: null, totalQuantity: 0, groupedData: {} };
   }
 }
 
@@ -109,31 +150,34 @@ async function getLatestMonthTotal(model, quantityField) {
 app.get("/birddetails", async (req, res) => {
   try {
     const birdsData = await getLatestMonthTotal(BirdsModel, "quantity");
-    const mortalityData = await getLatestMonthTotal(MortalityModel, "count");
+    const mortalityData = await getLatestMonthTotal(MortalityModel, "count", "shed");
 
     res.json({
       latestMonth: birdsData.month || mortalityData.month || "No Data",
       birdsTotalQuantity: birdsData.totalQuantity,
-      mortalityTotalQuantity: mortalityData.totalQuantity
+      mortalityTotalQuantity: mortalityData.totalQuantity,
+      shedWiseMortality: mortalityData.groupedData // Adding shed-wise mortality count
     });
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
-app.get("/birddetails", async (req, res) => {
-  try {
-    const birdsData = await getLatestMonthTotal(BirdsModel, "quantity");
-    const mortalityData = await getLatestMonthMortality(MortalityModel);
 
-    res.json({
-      latestMonth: mortalityData.month || birdsData.month || "No Data",
-      birdsTotalQuantity: birdsData.totalQuantity,
-      outletOneMortality: mortalityData.outletOneMortality,
-      outletTwoMortality: mortalityData.outletTwoMortality
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+app.patch("/updateOrder/:id", async (req, res) => {
+  try {
+    await BuyModel.findByIdAndUpdate(req.params.id, { paymentStatus: req.body.paymentStatus });
+    res.json({ message: "Payment status updated." });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update payment status." });
+  }
+});
+app.patch("/updateSell/:id", async (req, res) => {
+  try {
+    await BuyModel.findByIdAndUpdate(req.params.id, { paymentStatus: req.body.paymentStatus });
+    res.json({ message: "Payment status updated." });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update payment status." });
   }
 });
 
@@ -144,21 +188,14 @@ app.delete("/deleteCustomer/:id", (req, res) => {
     .then((users) => res.json(users))
     .catch((err) => res.json(err));
 });
-
-// Update user by ID
-app.put("/updateCustomer/:id", (req, res) => {
+app.delete("/deleteSupplier/:id", (req, res) => {
   const id = req.params.id;
-  CustomerModel.findByIdAndUpdate(
-    { _id: id },
-    {
-      name: req.body.name,
-      email: req.body.email,
-      age: req.body.age,
-    }
-  )
+  SupplierModel.findByIdAndDelete({ _id: id })
     .then((users) => res.json(users))
     .catch((err) => res.json(err));
 });
+
+
 
 // Create a new user
 app.post("/createUser", (req, res) => {
@@ -178,6 +215,16 @@ app.post("/getCustomers", (req, res) => {
 });
 
 
+app.post("/Cfeedtype", (req, res) => {
+  FeedTypeModel.create(req.body)
+    .then((users) => res.json(users))
+    .catch((err) => res.json(err));
+});
+app.post("/empManage", (req, res) => {
+  EmployeeModel.create(req.body)
+    .then((users) => res.json(users))
+    .catch((err) => res.json(err));
+});
 app.post("/addchicks", (req, res) => {
   BirdsModel.create(req.body)
     .then((users) => res.json(users))
@@ -212,12 +259,30 @@ app.get('/getCustomer/:id', async (req, res) => {
     res.status(500).json({ message: 'Error fetching customer', error });
   }
 });
+app.get('/getSupplier/:id', async (req, res) => {
+  try {
+    const Supplier = await SupplierModel.findById(req.params.id);
+    if (!Supplier) return res.status(404).json({ message: 'Customer not found' });
+    res.json(Supplier);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching customer', error });
+  }
+});
 app.post("/addSupplier", (req, res) => {
   SupplierModel.create(req.body)
     .then((users) => res.json(users))
     .catch((err) => res.json(err));
 });
-
+app.post("/vaccination", (req, res) => {
+  VaccineModel.create(req.body)
+    .then((users) => res.json(users))
+    .catch((err) => res.json(err));
+});
+app.post("/medication", (req, res) => {
+  MedicationModel.create(req.body)
+    .then((users) => res.json(users))
+    .catch((err) => res.json(err));
+});
 app.post("/buy", (req, res) => {
   BuyModel.create(req.body)
     .then((users) => res.json(users))
@@ -230,6 +295,11 @@ app.post("/Cfeed", (req, res) => {
 });
 app.get('/orders', (req, res) => {
   BuyModel.find()
+    .then((orders) => res.json(orders))
+    .catch((err) => res.status(500).json({ error: err.message }));
+});
+app.get('/sellOrder', (req, res) => {
+  SellModel.find()
     .then((orders) => res.json(orders))
     .catch((err) => res.status(500).json({ error: err.message }));
 });
@@ -288,9 +358,18 @@ app.delete('/deleteCustomer/:id', async (req, res) => {
     res.status(500).json({ message: 'Error deleting customer', error });
   }
 });
+app.delete('/deleteSupplier/:id', async (req, res) => {
+  try {
+    const deletedSupplier = await Supplier.findByIdAndDelete(req.params.id);
+    if (!deletedSupplier) return res.status(404).json({ message: 'Customer not found' });
+    res.json({ message: 'Customer deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting customer', error });
+  }
+});
 // Server listening
 const PORT = process.env.PORT || 3001;
-
 app.listen(PORT, () => {
-  console.log(`Running on port ${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
+
