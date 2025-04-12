@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 // Define the schema for the User
 const userSchema = new mongoose.Schema({
   quantity: String,
+  outlet: String,
   date: String,
   time: String,
   shed: String
