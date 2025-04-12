@@ -168,28 +168,26 @@ app.get("/birddetails", async (req, res) => {
 });
 app.get('/totalbirds', async (req, res) => {
   try {
-    // Fetch all birds (from /getbirds or database)
-    const birdsRes = await axios.get('https://server-1-4nmn.onrender.com/getbirds');
-    const birdData = birdsRes.data;
+    const chicks = await db.collection('addchicks').find().toArray();
+    const birdDetails = await db.collection('birddetails').findOne({}, { sort: { _id: -1 } });
 
-    // Calculate total from all quantities (positive and negative)
-    let totalQuantity = 0;
-    birdData.forEach(entry => {
-      totalQuantity += entry.quantity; // assuming each entry has quantity
+    // Step 1: Add all quantities
+    let total = 0;
+    chicks.forEach(chick => {
+      total += parseInt(chick.quantity); // handles both positive and negative
     });
 
-    // Fetch mortality
-    const mortalityRes = await axios.get('https://server-1-4nmn.onrender.com/birddetails');
-    const mortality = mortalityRes.data.mortalityTotalQuantity || 0;
-
-    const finalTotal = totalQuantity - mortality;
+    // Step 2: Subtract mortality
+    const mortality = parseInt(birdDetails?.mortalityTotalQuantity || 0);
+    const finalTotal = total - mortality;
 
     res.json({ totalBirds: finalTotal });
-  } catch (err) {
-    console.error('Error in /totalbirds route:', err.message);
+  } catch (error) {
+    console.error('Error in /totalbirds:', error);
     res.status(500).json({ error: 'Failed to calculate total birds' });
   }
 });
+
 
 app.patch("/updateOrder/:id", async (req, res) => {
   try {
