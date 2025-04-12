@@ -15,6 +15,7 @@ const EmployeeModel = require("./models/Employee");
 const FeedTypeModel = require("./models/FeedType");
 const VaccineModel = require("./models/Vaccination");
 const MedicationModel = require("./models/Medication");
+const { default: axios } = require("axios");
 
 const app = express();
 app.use(cors());
