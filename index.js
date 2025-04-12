@@ -168,18 +168,20 @@ app.get("/birddetails", async (req, res) => {
 });
 app.get('/totalbirds', async (req, res) => {
   try {
-    const chicks = await db.collection('birds').find().toArray();
-    const birdDetails = await db.collection('mortalities').findOne({}, { sort: { _id: -1 } });
+    const chicks = await BirdsModel.find();
+    const mortalities = await MortalityModel.find();
 
-    // Step 1: Add all quantities
     let total = 0;
     chicks.forEach(chick => {
-      total += parseInt(chick.quantity); // handles both positive and negative
+      total += parseInt(chick.quantity || 0);
     });
 
-    // Step 2: Subtract mortality
-    const mortality = parseInt(birdDetails?.mortalityTotalQuantity || 0);
-    const finalTotal = total - mortality;
+    let totalMortality = 0;
+    mortalities.forEach(m => {
+      totalMortality += parseInt(m.count || 0);
+    });
+
+    const finalTotal = total - totalMortality;
 
     res.json({ totalBirds: finalTotal });
   } catch (error) {
@@ -187,6 +189,7 @@ app.get('/totalbirds', async (req, res) => {
     res.status(500).json({ error: 'Failed to calculate total birds' });
   }
 });
+
 
 
 app.patch("/updateOrder/:id", async (req, res) => {
