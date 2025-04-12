@@ -165,7 +165,7 @@ app.get("/birddetails", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-router.get('/totalbirds', async (req, res) => {
+app.get('/totalbirds', async (req, res) => {
   try {
     // Fetch all birds (from /getbirds or database)
     const birdsRes = await axios.get('https://server-1-4nmn.onrender.com/getbirds');
