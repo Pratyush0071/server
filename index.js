@@ -165,7 +165,30 @@ app.get("/birddetails", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+router.get('/totalbirds', async (req, res) => {
+  try {
+    // Fetch all birds (from /getbirds or database)
+    const birdsRes = await axios.get('https://server-1-4nmn.onrender.com/getbirds');
+    const birdData = birdsRes.data;
 
+    // Calculate total from all quantities (positive and negative)
+    let totalQuantity = 0;
+    birdData.forEach(entry => {
+      totalQuantity += entry.quantity; // assuming each entry has quantity
+    });
+
+    // Fetch mortality
+    const mortalityRes = await axios.get('https://server-1-4nmn.onrender.com/birddetails');
+    const mortality = mortalityRes.data.mortalityTotalQuantity || 0;
+
+    const finalTotal = totalQuantity - mortality;
+
+    res.json({ totalBirds: finalTotal });
+  } catch (err) {
+    console.error('Error in /totalbirds route:', err.message);
+    res.status(500).json({ error: 'Failed to calculate total birds' });
+  }
+});
 
 app.patch("/updateOrder/:id", async (req, res) => {
   try {
@@ -225,11 +248,6 @@ app.post("/Cfeedtype", (req, res) => {
 });
 app.post("/empManage", (req, res) => {
   EmployeeModel.create(req.body)
-    .then((users) => res.json(users))
-    .catch((err) => res.json(err));
-});
-app.post("/addchicks", (req, res) => {
-  BirdsModel.create(req.body)
     .then((users) => res.json(users))
     .catch((err) => res.json(err));
 });
