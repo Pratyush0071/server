@@ -168,8 +168,8 @@ app.get("/birddetails", async (req, res) => {
 });
 app.get('/totalbirds', async (req, res) => {
   try {
-    const chicks = await db.collection('bird').find().toArray();
-    const birdDetails = await db.collection('mortality').findOne({}, { sort: { _id: -1 } });
+    const chicks = await db.collection('birds').find().toArray();
+    const birdDetails = await db.collection('mortalities').findOne({}, { sort: { _id: -1 } });
 
     // Step 1: Add all quantities
     let total = 0;
