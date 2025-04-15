@@ -16,6 +16,7 @@ const FeedTypeModel = require("./models/FeedType");
 const VaccineModel = require("./models/Vaccination");
 const MedicationModel = require("./models/Medication");
 const { default: axios } = require("axios");
+const foodModel = require("./models/Food");
 
 const app = express();
 app.use(cors());
@@ -35,7 +36,11 @@ app.get("/", (req, res) => {
     .then((users) => res.json(users))
     .catch((err) => res.json(err));
 });
-
+app.get("/foodData", (req, res) => {
+  foodModel.find()
+    .then(data => res.json(data))
+    .catch(err => res.status(500).json(err));
+});
 // Get user by ID
 app.get("/getUser/:id", (req, res) => {
   const id = req.params.id;
@@ -242,7 +247,11 @@ app.post("/addCustomer", (req, res) => {
     .catch((err) => res.json(err));
 });
 
-
+app.post("/food", (req, res) => {
+  foodModel.create(req.body)
+    .then((users) => res.json(users))
+    .catch((err) => res.json(err));
+});
 app.post("/Cfeedtype", (req, res) => {
   FeedTypeModel.create(req.body)
     .then((users) => res.json(users))
