@@ -389,10 +389,12 @@ app.delete('/deletefeedtype/:feedType', async (req, res) => {
   const feedTypeParam = req.params.feedType;
 
   try {
+    // Delete the feed type from the database
     const result = await FeedTypeModel.deleteOne({ 
-      feedType: { $regex: new RegExp(`^${feedTypeParam}$`, 'i') } 
+      feedType: { $regex: new RegExp(`^${feedTypeParam}$`, 'i') } // Case-insensitive match
     });
 
+    // Check if the feed type was deleted
     if (result.deletedCount > 0) {
       res.status(200).json({ message: 'Feed type deleted successfully' });
     } else {
@@ -403,7 +405,23 @@ app.delete('/deletefeedtype/:feedType', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+router.delete("/deletemedicine/:id", async (req, res) => {
+  const { id } = req.params;
 
+  try {
+    // Find the medicine by ID and delete it
+    const deletedMedicine = await MedicationModel.findByIdAndDelete(id);
+
+    if (!deletedMedicine) {
+      return res.status(404).json({ message: "Medicine not found" });
+    }
+
+    res.status(200).json({ message: "Medicine deleted successfully", deletedMedicine });
+  } catch (error) {
+    console.error("Error deleting medicine:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 app.delete('/deleteCustomer/:id', async (req, res) => {
   try {
     const deletedCustomer = await Customer.findByIdAndDelete(req.params.id);
