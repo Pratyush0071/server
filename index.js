@@ -389,7 +389,7 @@ app.delete('/deletefeedtype/:feedType', async (req, res) => {
   const feedTypeParam = req.params.feedType;
 
   try {
-    const result = await CfeedModel.deleteOne({ 
+    const result = await FeedTypeModel.deleteOne({ 
       feedType: { $regex: new RegExp(`^${feedTypeParam}$`, 'i') } 
     });
 
