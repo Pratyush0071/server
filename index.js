@@ -385,6 +385,24 @@ app.put('/updateCustomer/:id', async (req, res) => {
     res.status(500).json({ message: 'Error updating customer', error });
   }
 });
+// DELETE route to remove a feed type
+app.delete('/deletefeedtype/:feedType', async (req, res) => {
+  const { feedType } = req.params;
+
+  try {
+    // Assuming you're using MongoDB and Mongoose
+    const result = await foodModel.deleteOne({ feedType });
+
+    if (result.deletedCount > 0) {
+      res.status(200).json({ message: 'Feed type deleted successfully' });
+    } else {
+      res.status(404).json({ message: 'Feed type not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting feed type:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 app.delete('/deleteCustomer/:id', async (req, res) => {
   try {
