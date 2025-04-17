@@ -207,7 +207,7 @@ app.patch("/updateOrder/:id", async (req, res) => {
 });
 app.patch("/updateSell/:id", async (req, res) => {
   try {
-    await BuyModel.findByIdAndUpdate(req.params.id, { paymentStatus: req.body.paymentStatus });
+    await SellModel.findByIdAndUpdate(req.params.id, { paymentStatus: req.body.paymentStatus });
     res.json({ message: "Payment status updated." });
   } catch (err) {
     res.status(500).json({ error: "Failed to update payment status." });
