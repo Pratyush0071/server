@@ -385,13 +385,13 @@ app.put('/updateCustomer/:id', async (req, res) => {
     res.status(500).json({ message: 'Error updating customer', error });
   }
 });
-const CfeedModel = require('./path-to-your-model/CfeedModel'); // Make sure path is correct
-
 app.delete('/deletefeedtype/:feedType', async (req, res) => {
-  const feedType = req.params.feedType.toUpperCase(); // ensure consistent case
+  const feedTypeParam = req.params.feedType;
 
   try {
-    const result = await CfeedModel.deleteOne({ feedType });
+    const result = await CfeedModel.deleteOne({ 
+      feedType: { $regex: new RegExp(`^${feedTypeParam}$`, 'i') } 
+    });
 
     if (result.deletedCount > 0) {
       res.status(200).json({ message: 'Feed type deleted successfully' });
@@ -403,7 +403,6 @@ app.delete('/deletefeedtype/:feedType', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-
 
 app.delete('/deleteCustomer/:id', async (req, res) => {
   try {
