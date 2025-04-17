@@ -385,13 +385,13 @@ app.put('/updateCustomer/:id', async (req, res) => {
     res.status(500).json({ message: 'Error updating customer', error });
   }
 });
-// DELETE route to remove a feed type
 app.delete('/deletefeedtype/:feedType', async (req, res) => {
-  const { feedType } = req.params;
+  const feedTypeParam = req.params.feedType;
 
   try {
-    // Assuming you're using MongoDB and Mongoose
-    const result = await foodModel.deleteOne({ feedType });
+    const result = await foodModel.deleteOne({ 
+      feedType: { $regex: new RegExp(`^${feedTypeParam}$`, 'i') } 
+    });
 
     if (result.deletedCount > 0) {
       res.status(200).json({ message: 'Feed type deleted successfully' });
