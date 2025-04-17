@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   weight: String,
   rate: String,
   total: String,
+  paymentStatus:String,
   date: String,
   time: String,
 });
