@@ -405,7 +405,7 @@ app.delete('/deletefeedtype/:feedType', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-router.delete("/deletemedicine/:id", async (req, res) => {
+app.delete("/deletemedicine/:id", async (req, res) => {
   const { id } = req.params;
 
   try {
