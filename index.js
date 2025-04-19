@@ -188,6 +188,7 @@ app.get("/birddetails", async (req, res) => {
 });
 app.get("/total", async (req, res) => {
   try {
+    // Get data aggregated by outlet
     const outletWiseData = await BirdsModel.aggregate([
       {
         $group: {
@@ -201,25 +202,44 @@ app.get("/total", async (req, res) => {
       },
     ]);
 
+    // Get all mortality data
     const mortalities = await MortalityModel.find();
 
-    let totalMortality = 0;
+    let totalMortality1 = 0;
+    let totalMortality2 = 0;
+
+    // Iterate over mortality records and calculate mortality for outlet 1 and outlet 2
     mortalities.forEach((m) => {
-      totalMortality += parseInt(m.count || 0);
+      const count = parseInt(m.count || 0);
+      const shedRange = m.shed;
+
+      // If shed is in the format of '1-x', count as mortality for outlet 1
+      if (shedRange.startsWith("1-")) {
+        totalMortality1 += count; // Mortality for outlet 1
+      }
+
+      // If shed is in the format of '2-x', count as mortality for outlet 2
+      if (shedRange.startsWith("2-")) {
+        totalMortality2 += count; // Mortality for outlet 2
+      }
     });
 
+    // Find outlet totals from birds data
     const outlet1Total =
       outletWiseData.find((o) => o._id === "1")?.totalQuantity || 0;
     const outlet2Total =
       outletWiseData.find((o) => o._id === "2")?.totalQuantity || 0;
 
-    const finalTotal1 = outlet1Total - totalMortality;
-    const finalTotal2 = outlet2Total - totalMortality;
+    // Calculate final totals for each outlet
+    const finalTotal1 = outlet1Total - totalMortality1;
+    const finalTotal2 = outlet2Total - totalMortality2;
 
+    // Send the response with calculated data
     res.json({
       outlet1Total,
       outlet2Total,
-      totalMortality,
+      totalMortality1,
+      totalMortality2,
       finalTotal1,
       finalTotal2,
     });
