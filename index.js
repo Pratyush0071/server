@@ -171,6 +171,68 @@ app.get("/birddetails", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+app.get('/total', async (req, res) => {
+  try {
+    // Get outlet-wise quantity for the current month
+    const outletWiseData = await BirdsModel.aggregate([
+      {
+        $match: {
+          date: {
+            $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+            $lte: new Date()
+          }
+        }
+      },
+      {
+        $group: {
+          _id: "$outlet",
+          totalQuantity: {
+            $sum: {
+              $toInt: "$quantity"
+            }
+          }
+        }
+      }
+    ]);
+
+    // Format outlet totals
+    let outlet1Total = 0;
+    let outlet2Total = 0;
+
+    outletWiseData.forEach(item => {
+      if (item._id == 1) outlet1Total = item.totalQuantity;
+      if (item._id == 2) outlet2Total = item.totalQuantity;
+    });
+
+    // Get total mortality for the current month
+    const mortalities = await MortalityModel.find({
+      date: {
+        $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+        $lte: new Date()
+      }
+    });
+
+    let totalMortality = 0;
+    mortalities.forEach(m => {
+      totalMortality += parseInt(m.count || 0);
+    });
+
+    // Subtract mortality equally from both outlets (or change logic if needed)
+    const finalTotal1 = outlet1Total - totalMortality;
+    const finalTotal2 = outlet2Total - totalMortality;
+
+    res.json({
+      outlet1Total,
+      outlet2Total,
+      totalMortality,
+      finalTotal1,
+      finalTotal2
+    });
+  } catch (error) {
+    console.error('Error in /total:', error);
+    res.status(500).json({ error: 'Failed to calculate total birds' });
+  }
+});
 app.get('/totalbirds', async (req, res) => {
   try {
     const chicks = await BirdsModel.find();
