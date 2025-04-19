@@ -17,6 +17,7 @@ const VaccineModel = require("./models/Vaccination");
 const MedicationModel = require("./models/Medication");
 const { default: axios } = require("axios");
 const foodModel = require("./models/Food");
+const DataModel = require("./models/Data");
 
 const app = express();
 app.use(cors());
@@ -61,6 +62,11 @@ app.get("/getSupplier", (req, res) => {
 });
 app.get("/getbirds", (req, res) => {
   BirdsModel.find({})
+    .then((cust) => res.json(cust))
+    .catch((err) => res.json(err));
+});
+app.get("/showbird", (req, res) => {
+  DataModel.find({})
     .then((cust) => res.json(cust))
     .catch((err) => res.json(err));
 });
@@ -287,6 +293,11 @@ app.delete("/deleteSupplier/:id", (req, res) => {
 });
 
 // Create a new user
+app.post("/bird", (req, res) => {
+  DataModel.create(req.body)
+    .then((users) => res.json(users))
+    .catch((err) => res.json(err));
+});
 app.post("/createUser", (req, res) => {
   UserModel.create(req.body)
     .then((users) => res.json(users))
