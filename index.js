@@ -233,6 +233,7 @@ app.get("/total", async (req, res) => {
     // Calculate final totals for each outlet
     const finalTotal1 = outlet1Total - totalMortality1;
     const finalTotal2 = outlet2Total - totalMortality2;
+    const Total = finalTotal1 - finalTotal2;
 
     // Send the response with calculated data
     res.json({
@@ -242,34 +243,11 @@ app.get("/total", async (req, res) => {
       totalMortality2,
       finalTotal1,
       finalTotal2,
+      Total
     });
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ error: "Something went wrong" });
-  }
-});
-
-app.get("/totalbirds", async (req, res) => {
-  try {
-    const chicks = await BirdsModel.find();
-    const mortalities = await MortalityModel.find();
-
-    let total = 0;
-    chicks.forEach((chick) => {
-      total += parseInt(chick.quantity || 0);
-    });
-
-    let totalMortality = 0;
-    mortalities.forEach((m) => {
-      totalMortality += parseInt(m.count || 0);
-    });
-
-    const finalTotal = total - totalMortality;
-
-    res.json({ totalBirds: finalTotal });
-  } catch (error) {
-    console.error("Error in /totalbirds:", error);
-    res.status(500).json({ error: "Failed to calculate total birds" });
   }
 });
 
