@@ -244,7 +244,7 @@ app.get("/total", async (req, res) => {
     // Calculate final totals for each outlet
     const finalTotal1 = outlet1Total - totalMortality1;
     const finalTotal2 = outlet2Total - totalMortality2;
-    const Total = finalTotal1 - finalTotal2;
+    const Total = finalTotal1 + finalTotal2;
 
     // Send the response with calculated data
     res.json({
@@ -284,12 +284,21 @@ app.patch("/updateSell/:id", async (req, res) => {
 });
 
 // Delete user by ID
-app.delete("/deleteCustomer/:id", (req, res) => {
-  const id = req.params.id;
-  CustomerModel.findByIdAndDelete({ _id: id })
-    .then((users) => res.json(users))
-    .catch((err) => res.json(err));
+// In your Express.js server
+app.delete('/deleteCustomer/:id', async (req, res) => {
+  const { id } = req.params;  // 'id' here should correspond to _id in MongoDB
+  try {
+    const result = await CustomerModel.findByIdAndDelete(id); // Use findByIdAndDelete for MongoDB _id
+    if (result) {
+      return res.status(200).json({ message: 'Customer deleted successfully' });
+    }
+    return res.status(404).json({ message: 'Customer not found' });
+  } catch (error) {
+    console.error('Error deleting customer:', error);
+    return res.status(500).json({ message: 'Failed to delete customer' });
+  }
 });
+
 app.delete("/deleteSupplier/:id", (req, res) => {
   const id = req.params.id;
   SupplierModel.findByIdAndDelete({ _id: id })
