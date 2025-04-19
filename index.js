@@ -37,9 +37,10 @@ app.get("/", (req, res) => {
     .catch((err) => res.json(err));
 });
 app.get("/foodData", (req, res) => {
-  foodModel.find()
-    .then(data => res.json(data))
-    .catch(err => res.status(500).json(err));
+  foodModel
+    .find()
+    .then((data) => res.json(data))
+    .catch((err) => res.status(500).json(err));
 });
 // Get user by ID
 app.get("/getUser/:id", (req, res) => {
@@ -50,56 +51,61 @@ app.get("/getUser/:id", (req, res) => {
 });
 app.get("/getCustomer", (req, res) => {
   CustomerModel.find({})
-  .then((cust) => res.json(cust))
+    .then((cust) => res.json(cust))
     .catch((err) => res.json(err));
 });
 app.get("/getSupplier", (req, res) => {
   SupplierModel.find({})
-  .then((cust) => res.json(cust))
+    .then((cust) => res.json(cust))
     .catch((err) => res.json(err));
 });
 app.get("/getbirds", (req, res) => {
   BirdsModel.find({})
-  .then((cust) => res.json(cust))
+    .then((cust) => res.json(cust))
     .catch((err) => res.json(err));
 });
 
 app.get("/getbhoosa", (req, res) => {
   BhoosaModel.find({})
-  .then((cust) => res.json(cust))
+    .then((cust) => res.json(cust))
     .catch((err) => res.json(err));
 });
 app.get("/getfeeds", (req, res) => {
   FeedModel.find({})
-  .then((cust) => res.json(cust))
+    .then((cust) => res.json(cust))
     .catch((err) => res.json(err));
 });
 app.get("/typefeeds", (req, res) => {
   FeedTypeModel.find({})
-  .then((cust) => res.json(cust))
+    .then((cust) => res.json(cust))
     .catch((err) => res.json(err));
 });
 app.get("/getmedicine", (req, res) => {
   MedicationModel.find({})
-  .then((cust) => res.json(cust))
+    .then((cust) => res.json(cust))
     .catch((err) => res.json(err));
 });
-app.get('/getempManage', async (req, res) => {
+app.get("/getempManage", async (req, res) => {
   try {
     const employees = await EmployeeModel.find(); // Adjust based on your DB structure
     res.json(employees);
   } catch (error) {
-    res.status(500).send('Error retrieving employees');
+    res.status(500).send("Error retrieving employees");
   }
 });
 
 app.get("/getmotality", (req, res) => {
   MortalityModel.find({})
-  .then((cust) => res.json(cust))
+    .then((cust) => res.json(cust))
     .catch((err) => res.json(err));
-});async function getLatestMonthTotal(model, quantityField, groupByField = null) {
+});
+async function getLatestMonthTotal(model, quantityField, groupByField = null) {
   try {
-    const latestEntry = await model.findOne().sort({ date: -1 }).select("date").lean();
+    const latestEntry = await model
+      .findOne()
+      .sort({ date: -1 })
+      .select("date")
+      .lean();
 
     if (!latestEntry || !latestEntry.date) {
       return { month: null, totalQuantity: 0, groupedData: {} };
@@ -111,16 +117,21 @@ app.get("/getmotality", (req, res) => {
       {
         $match: {
           date: { $regex: `^${latestMonth}` }, // Matches all entries from the latest month
-          ...(groupByField && { [groupByField]: { $ne: null, $ne: "" } }) // Ensure shed field is not null or empty
-        }
+          ...(groupByField && { [groupByField]: { $ne: null, $ne: "" } }), // Ensure shed field is not null or empty
+        },
       },
       {
         $addFields: {
-          quantityInt: { 
-            $convert: { input: `$${quantityField}`, to: "int", onError: 0, onNull: 0 } 
-          } // Convert field to integer safely
-        }
-      }
+          quantityInt: {
+            $convert: {
+              input: `$${quantityField}`,
+              to: "int",
+              onError: 0,
+              onNull: 0,
+            },
+          }, // Convert field to integer safely
+        },
+      },
     ];
 
     let totalQuantity = 0;
@@ -130,12 +141,12 @@ app.get("/getmotality", (req, res) => {
       aggregationPipeline.push({
         $group: {
           _id: `$${groupByField}`,
-          totalQuantity: { $sum: "$quantityInt" } // Sum up the integer values per group
-        }
+          totalQuantity: { $sum: "$quantityInt" }, // Sum up the integer values per group
+        },
       });
 
       const result = await model.aggregate(aggregationPipeline);
-      result.forEach(entry => {
+      result.forEach((entry) => {
         groupedData[entry._id] = entry.totalQuantity;
         totalQuantity += entry.totalQuantity; // Sum up total quantity only for valid sheds
       });
@@ -147,7 +158,7 @@ app.get("/getmotality", (req, res) => {
     return {
       month: latestMonth,
       totalQuantity,
-      groupedData
+      groupedData,
     };
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -159,65 +170,49 @@ app.get("/getmotality", (req, res) => {
 app.get("/birddetails", async (req, res) => {
   try {
     const birdsData = await getLatestMonthTotal(BirdsModel, "quantity");
-    const mortalityData = await getLatestMonthTotal(MortalityModel, "count", "shed");
+    const mortalityData = await getLatestMonthTotal(
+      MortalityModel,
+      "count",
+      "shed"
+    );
 
     res.json({
       latestMonth: birdsData.month || mortalityData.month || "No Data",
       birdsTotalQuantity: birdsData.totalQuantity,
       mortalityTotalQuantity: mortalityData.totalQuantity,
-      shedWiseMortality: mortalityData.groupedData // Adding shed-wise mortality count
+      shedWiseMortality: mortalityData.groupedData, // Adding shed-wise mortality count
     });
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-app.get('/total', async (req, res) => {
+app.get("/total", async (req, res) => {
   try {
-    // Get outlet-wise quantity for the current month
     const outletWiseData = await BirdsModel.aggregate([
-      {
-        $match: {
-          date: {
-            $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-            $lte: new Date()
-          }
-        }
-      },
       {
         $group: {
           _id: "$outlet",
           totalQuantity: {
             $sum: {
-              $toInt: "$quantity"
-            }
-          }
-        }
-      }
+              $toInt: "$quantity",
+            },
+          },
+        },
+      },
     ]);
 
-    // Format outlet totals
-    let outlet1Total = 0;
-    let outlet2Total = 0;
-
-    outletWiseData.forEach(item => {
-      if (item._id == 1) outlet1Total = item.totalQuantity;
-      if (item._id == 2) outlet2Total = item.totalQuantity;
-    });
-
-    // Get total mortality for the current month
-    const mortalities = await MortalityModel.find({
-      date: {
-        $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-        $lte: new Date()
-      }
-    });
+    const mortalities = await MortalityModel.find();
 
     let totalMortality = 0;
-    mortalities.forEach(m => {
+    mortalities.forEach((m) => {
       totalMortality += parseInt(m.count || 0);
     });
 
-    // Subtract mortality equally from both outlets (or change logic if needed)
+    const outlet1Total =
+      outletWiseData.find((o) => o._id === "1")?.totalQuantity || 0;
+    const outlet2Total =
+      outletWiseData.find((o) => o._id === "2")?.totalQuantity || 0;
+
     const finalTotal1 = outlet1Total - totalMortality;
     const finalTotal2 = outlet2Total - totalMortality;
 
@@ -226,25 +221,26 @@ app.get('/total', async (req, res) => {
       outlet2Total,
       totalMortality,
       finalTotal1,
-      finalTotal2
+      finalTotal2,
     });
   } catch (error) {
-    console.error('Error in /total:', error);
-    res.status(500).json({ error: 'Failed to calculate total birds' });
+    console.error("Error:", error);
+    res.status(500).json({ error: "Something went wrong" });
   }
 });
-app.get('/totalbirds', async (req, res) => {
+
+app.get("/totalbirds", async (req, res) => {
   try {
     const chicks = await BirdsModel.find();
     const mortalities = await MortalityModel.find();
 
     let total = 0;
-    chicks.forEach(chick => {
+    chicks.forEach((chick) => {
       total += parseInt(chick.quantity || 0);
     });
 
     let totalMortality = 0;
-    mortalities.forEach(m => {
+    mortalities.forEach((m) => {
       totalMortality += parseInt(m.count || 0);
     });
 
@@ -252,16 +248,16 @@ app.get('/totalbirds', async (req, res) => {
 
     res.json({ totalBirds: finalTotal });
   } catch (error) {
-    console.error('Error in /totalbirds:', error);
-    res.status(500).json({ error: 'Failed to calculate total birds' });
+    console.error("Error in /totalbirds:", error);
+    res.status(500).json({ error: "Failed to calculate total birds" });
   }
 });
 
-
-
 app.patch("/updateOrder/:id", async (req, res) => {
   try {
-    await BuyModel.findByIdAndUpdate(req.params.id, { paymentStatus: req.body.paymentStatus });
+    await BuyModel.findByIdAndUpdate(req.params.id, {
+      paymentStatus: req.body.paymentStatus,
+    });
     res.json({ message: "Payment status updated." });
   } catch (err) {
     res.status(500).json({ error: "Failed to update payment status." });
@@ -269,7 +265,9 @@ app.patch("/updateOrder/:id", async (req, res) => {
 });
 app.patch("/updateSell/:id", async (req, res) => {
   try {
-    await SellModel.findByIdAndUpdate(req.params.id, { paymentStatus: req.body.paymentStatus });
+    await SellModel.findByIdAndUpdate(req.params.id, {
+      paymentStatus: req.body.paymentStatus,
+    });
     res.json({ message: "Payment status updated." });
   } catch (err) {
     res.status(500).json({ error: "Failed to update payment status." });
@@ -290,8 +288,6 @@ app.delete("/deleteSupplier/:id", (req, res) => {
     .catch((err) => res.json(err));
 });
 
-
-
 // Create a new user
 app.post("/createUser", (req, res) => {
   UserModel.create(req.body)
@@ -310,7 +306,8 @@ app.post("/addCustomer", (req, res) => {
 });
 
 app.post("/food", (req, res) => {
-  foodModel.create(req.body)
+  foodModel
+    .create(req.body)
     .then((users) => res.json(users))
     .catch((err) => res.json(err));
 });
@@ -349,22 +346,24 @@ app.post("/sell", (req, res) => {
     .then((users) => res.json(users))
     .catch((err) => res.json(err));
 });
-app.get('/getCustomer/:id', async (req, res) => {
+app.get("/getCustomer/:id", async (req, res) => {
   try {
     const customer = await CustomerModel.findById(req.params.id);
-    if (!customer) return res.status(404).json({ message: 'Customer not found' });
+    if (!customer)
+      return res.status(404).json({ message: "Customer not found" });
     res.json(customer);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching customer', error });
+    res.status(500).json({ message: "Error fetching customer", error });
   }
 });
-app.get('/getSupplier/:id', async (req, res) => {
+app.get("/getSupplier/:id", async (req, res) => {
   try {
     const Supplier = await SupplierModel.findById(req.params.id);
-    if (!Supplier) return res.status(404).json({ message: 'Customer not found' });
+    if (!Supplier)
+      return res.status(404).json({ message: "Customer not found" });
     res.json(Supplier);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching customer', error });
+    res.status(500).json({ message: "Error fetching customer", error });
   }
 });
 app.post("/addSupplier", (req, res) => {
@@ -392,79 +391,86 @@ app.post("/Cfeed", (req, res) => {
     .then((users) => res.json(users))
     .catch((err) => res.json(err));
 });
-app.get('/orders', (req, res) => {
+app.get("/orders", (req, res) => {
   BuyModel.find()
     .then((orders) => res.json(orders))
     .catch((err) => res.status(500).json({ error: err.message }));
 });
-app.get('/sellOrder', (req, res) => {
+app.get("/sellOrder", (req, res) => {
   SellModel.find()
     .then((orders) => res.json(orders))
     .catch((err) => res.status(500).json({ error: err.message }));
 });
-app.get('/getCfeed', (req, res) => {
+app.get("/getCfeed", (req, res) => {
   CfeedModel.find()
     .then((orders) => res.json(orders))
     .catch((err) => res.status(500).json({ error: err.message }));
 });
 
-app.post('/login', async (req, res) => {
+app.post("/login", async (req, res) => {
   const { name, password } = req.body;
 
   try {
-      const user = await UserModel.findOne({ name });
+    const user = await UserModel.findOne({ name });
 
-      if (!user) {
-          return res.json({ success: false, message: "User not found" });
-      }
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
+    }
 
-      // If passwords are hashed, compare using bcrypt
-      // const isMatch = await bcrypt.compare(password, user.password);
-      const isMatch = user.password === password; // Use this if passwords are not hashed
+    // If passwords are hashed, compare using bcrypt
+    // const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = user.password === password; // Use this if passwords are not hashed
 
-      if (!isMatch) {
-          return res.json({ success: false, message: "Invalid credentials" });
-      }
+    if (!isMatch) {
+      return res.json({ success: false, message: "Invalid credentials" });
+    }
 
-      return res.json({ 
-          success: true, 
-          message: "Login successful", 
-          user: { id: user._id, name: user.name } // Include _id
-      });
-
+    return res.json({
+      success: true,
+      message: "Login successful",
+      user: { id: user._id, name: user.name }, // Include _id
+    });
   } catch (error) {
-      console.error("Login error:", error);
-      return res.status(500).json({ success: false, message: "Server error" });
+    console.error("Login error:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-app.put('/updateCustomer/:id', async (req, res) => {
+app.put("/updateCustomer/:id", async (req, res) => {
   try {
-    const updatedCustomer = await Customer.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updatedCustomer) return res.status(404).json({ message: 'Customer not found' });
-    res.json({ message: 'Customer updated successfully', customer: updatedCustomer });
+    const updatedCustomer = await Customer.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    if (!updatedCustomer)
+      return res.status(404).json({ message: "Customer not found" });
+    res.json({
+      message: "Customer updated successfully",
+      customer: updatedCustomer,
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating customer', error });
+    res.status(500).json({ message: "Error updating customer", error });
   }
 });
-app.delete('/deletefeedtype/:feedType', async (req, res) => {
+app.delete("/deletefeedtype/:feedType", async (req, res) => {
   const feedTypeParam = req.params.feedType;
 
   try {
     // Delete the feed type from the database
-    const result = await FeedTypeModel.deleteOne({ 
-      feedType: { $regex: new RegExp(`^${feedTypeParam}$`, 'i') } // Case-insensitive match
+    const result = await FeedTypeModel.deleteOne({
+      feedType: { $regex: new RegExp(`^${feedTypeParam}$`, "i") }, // Case-insensitive match
     });
 
     // Check if the feed type was deleted
     if (result.deletedCount > 0) {
-      res.status(200).json({ message: 'Feed type deleted successfully' });
+      res.status(200).json({ message: "Feed type deleted successfully" });
     } else {
-      res.status(404).json({ message: 'Feed type not found' });
+      res.status(404).json({ message: "Feed type not found" });
     }
   } catch (error) {
-    console.error('Error deleting feed type:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error deleting feed type:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 app.delete("/deletemedicine/:id", async (req, res) => {
@@ -478,28 +484,32 @@ app.delete("/deletemedicine/:id", async (req, res) => {
       return res.status(404).json({ message: "Medicine not found" });
     }
 
-    res.status(200).json({ message: "Medicine deleted successfully", deletedMedicine });
+    res
+      .status(200)
+      .json({ message: "Medicine deleted successfully", deletedMedicine });
   } catch (error) {
     console.error("Error deleting medicine:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
-app.delete('/deleteCustomer/:id', async (req, res) => {
+app.delete("/deleteCustomer/:id", async (req, res) => {
   try {
     const deletedCustomer = await Customer.findByIdAndDelete(req.params.id);
-    if (!deletedCustomer) return res.status(404).json({ message: 'Customer not found' });
-    res.json({ message: 'Customer deleted successfully' });
+    if (!deletedCustomer)
+      return res.status(404).json({ message: "Customer not found" });
+    res.json({ message: "Customer deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting customer', error });
+    res.status(500).json({ message: "Error deleting customer", error });
   }
 });
-app.delete('/deleteSupplier/:id', async (req, res) => {
+app.delete("/deleteSupplier/:id", async (req, res) => {
   try {
     const deletedSupplier = await Supplier.findByIdAndDelete(req.params.id);
-    if (!deletedSupplier) return res.status(404).json({ message: 'Customer not found' });
-    res.json({ message: 'Customer deleted successfully' });
+    if (!deletedSupplier)
+      return res.status(404).json({ message: "Customer not found" });
+    res.json({ message: "Customer deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting customer', error });
+    res.status(500).json({ message: "Error deleting customer", error });
   }
 });
 // Server listening
@@ -507,4 +517,3 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
-
