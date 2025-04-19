@@ -91,6 +91,11 @@ app.get("/getmedicine", (req, res) => {
     .then((cust) => res.json(cust))
     .catch((err) => res.json(err));
 });
+app.get("/getvac", (req, res) => {
+  VaccineModel.find({})
+    .then((cust) => res.json(cust))
+    .catch((err) => res.json(err));
+});
 app.get("/getempManage", async (req, res) => {
   try {
     const employees = await EmployeeModel.find(); // Adjust based on your DB structure
